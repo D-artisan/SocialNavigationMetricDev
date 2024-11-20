@@ -1,47 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Trajectory Analysis Results</h1>
-
-<!-- Statistical Analysis -->
-<div class="statistics">
-    <h2>Statistical Analysis</h2>
-    {% if avg_value is not none %}
-    <p>Average Acceptable Social Behaviour: {{ avg_value|format_float }} / 100</p>
-    <p>Median Acceptable Social Behaviour: {{ median_value|format_float }} / 100</p>
-    <p>Standard Deviation: {{ std_dev|format_float }}</p>
-    {% else %}
-    <p>No data available for statistical analysis.</p>
-    {% endif %}
-</div>
-
-<!-- Visualization -->
-<div class="chart-container">
-    <h2>Acceptable Social Behaviour Chart</h2>
-    {% if chart %}
-    <img src="data:image/png;base64,{{ chart }}" alt="Acceptable Social Behaviour Chart">
-    {% else %}
-    <p>No data available to generate chart.</p>
-    {% endif %}
-</div>
-
-<!-- Filtering and Sorting -->
-<div class="filter-sort">
-    <form method="get" action="{{ url_for('index') }}">
-        <label for="filter_value">Filter Acceptable Social Behaviour (Minimum Value):</label>
-        <input type="number" name="filter_value" id="filter_value" min="0" max="100" step="1" value="{{ filter_value if filter_value is not none else '' }}">
-        <label for="sort_order">Sort Order:</label>
-        <select name="sort_order" id="sort_order">
-            <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Ascending</option>
-            <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Descending</option>
-        </select>
-        <button type="submit">Apply</button>
-    </form>
-</div>
-
-<!-- Trajectory Table -->
 <table>
     <thead>
         <tr>
+            <th>Trajectory Video</th>
             <th>Trajectory File</th>
             <th>Rating</th>
             <th>Goal Reached</th>
@@ -52,10 +15,32 @@
     <tbody>
         {% for trajectory in trajectories %}
         <tr class="{{ trajectory.manual_label.rating | lower if trajectory.manual_label.rating else 'not-labeled' }}">
+            <td>
+                {% if trajectory.video_file %}
+                <video width="200" controls>
+                    <source src="{{ url_for('serve_video', filename=trajectory.video_file) }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                {% else %}
+                No Video Available
+                {% endif %}
+            </td>
             <td><a href="{{ url_for('trajectory_detail', filename=trajectory.filename) }}">{{ trajectory.filename }}</a></td>
             <td>{{ trajectory.manual_label.rating if trajectory.manual_label.rating else 'Not Labeled' }}</td>
-            <td>{{ 'Yes' if trajectory.manual_label.goal_reached else 'No' if trajectory.manual_label.goal_reached == False else 'Not Set' }}</td>
-            <td>{{ 'Yes' if trajectory.manual_label.collision_occurred else 'No' if trajectory.manual_label.collision_occurred == False else 'Not Set' }}</td>
+            <td>
+                {% if trajectory.manual_label.goal_reached is defined and trajectory.manual_label.goal_reached is not none %}
+                    {{ 'Yes' if trajectory.manual_label.goal_reached else 'No' }}
+                {% else %}
+                    Not Set
+                {% endif %}
+            </td>
+            <td>
+                {% if trajectory.manual_label.collision_occurred is defined and trajectory.manual_label.collision_occurred is not none %}
+                    {{ 'Yes' if trajectory.manual_label.collision_occurred else 'No' }}
+                {% else %}
+                    Not Set
+                {% endif %}
+            </td>
             <td>
                 {% if trajectory.manual_label.acceptable_social_nav is defined and trajectory.manual_label.acceptable_social_nav is not none %}
                     {{ trajectory.manual_label.acceptable_social_nav|format_float }} / 100

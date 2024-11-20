@@ -1,6 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Trajectory Detail - {{ trajectory.filename }}</h1>
+
+<h2>Trajectory Video</h2>
+{% if trajectory.video_file %}
+<video width="600" controls>
+    <source src="{{ url_for('serve_video', filename=trajectory.video_file) }}" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+{% else %}
+<p>No Video Available</p>
+{% endif %}
+
+<!-- <h2>Discomfort Over Time</h2>
+<img src="data:image/png;base64,{{ plot_url }}" alt="Discomfort Over Time"> -->
+
 <p><strong>Rating:</strong> {{ manual_label.rating if manual_label.rating else 'Not Labeled' }}</p>
 
 <h2>Manual Selection</h2>
@@ -17,9 +31,9 @@
     <label>
         Acceptable Social Behaviour:<br>
         <input type="range" name="acceptable_social_nav" min="0" max="100" step="1"
-               value="{{ manual_label.acceptable_social_nav if manual_label.acceptable_social_nav is not none else 50 }}"
+               value="{{ manual_label.acceptable_social_nav if manual_label.acceptable_social_nav is defined and manual_label.acceptable_social_nav is not none else 50 }}"
                oninput="this.nextElementSibling.value = this.value">
-        <output>{{ manual_label.acceptable_social_nav if manual_label.acceptable_social_nav is not none else 50 }}</output> / 100
+        <output>{{ manual_label.acceptable_social_nav if manual_label.acceptable_social_nav is defined and manual_label.acceptable_social_nav is not none else 50 }}</output> / 100
     </label><br>
     <small>0: Unacceptable, 100: Highly Acceptable</small><br><br>
 
@@ -36,5 +50,5 @@
     <button type="submit">Submit</button>
 </form>
 
-<a href="{{ url_for('index') }}">Back to Results</a>
+<a href="{{ url_for('index') }}"><h2>Back to Results</h2></a>
 {% endblock %}

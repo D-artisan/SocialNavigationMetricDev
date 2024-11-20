@@ -1,6 +1,7 @@
 import sys
 import os
 import cv2
+import imageio
 import json
 import jsbeautifier
 import numpy as np
@@ -325,16 +326,19 @@ class MainWindow(QtWidgets.QWidget, Ui_MainWindow):
             print("Error saving JSON data:", e)
             return
 
+        # Convert images from BGR (OpenCV format) to RGB (imageio format)
+        images_rgb = [cv2.cvtColor(img, cv2.COLOR_BGR2RGB) for img in self.images_for_video]
+
         fps = len(self.images_for_video) / (self.end_episode - self.ini_episode)
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # mp4
-        writer = cv2.VideoWriter(self.save_dir + file_name + '.mp4', fourcc, fps,
-                                 (self.images_for_video[0].shape[1], self.images_for_video[0].shape[0]))
-        for image in self.images_for_video:
-            writer.write(image)
-        writer.release()
+        file_path = self.save_dir + file_name + '.mp4'
+
+        # Write video using imageio with H.264 codec
+        imageio.mimwrite(file_path, images_rgb, fps=fps, codec='libx264')
 
         self.data_file_index += 1
         print(f"Data saved as {file_name}.json and {file_name}.mp4")
+
+
 
     def start_saving(self, save):
         if save:

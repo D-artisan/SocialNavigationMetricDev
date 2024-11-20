@@ -3,19 +3,18 @@ body {
     margin: 20px;
 }
 
-h1, h2 {
+h1, h2, h3 {
     text-align: center;
 }
 
-.statistics, .chart-container, .filter-sort {
-    width: 90%;
-    margin: 20px auto;
+form {
     text-align: center;
+    margin-bottom: 20px;
 }
 
-.chart-container img {
-    max-width: 100%;
-    height: auto;
+label {
+    display: block;
+    margin: 5px;
 }
 
 table {
@@ -28,6 +27,7 @@ th, td {
     border: 1px solid #999;
     padding: 8px;
     text-align: center;
+    vertical-align: middle;
 }
 
 th {
@@ -46,19 +46,11 @@ th {
     background-color: #fff3cd;
 }
 
-form {
-    margin-bottom: 20px;
+video {
+    display: block;
+    margin: 10px auto;
 }
 
-form label {
-    margin-right: 10px;
-}
-
-form input, form select {
-    margin-right: 10px;
-}
-
-label {
-    display: inline-block;
-    margin-bottom: 5px;
+table video {
+    margin: 0;
 }
