@@ -1,0 +1,105 @@
+# socnavgym_conf.yaml
+
+rendering:
+    resolution_view: 500  # size of the resized OpenCV window on rendering
+    milliseconds: 30  # delay parameter for waitKey()
+
+episode:
+    episode_length: 300  # maximum steps in an episode
+    time_step: 0.1  # number of seconds that one step corresponds to
+    end_with_collision: False
+
+robot:
+    robot_radius: 0.35  # radius of the robot
+    goal_radius: 0.5  # radius of the goal
+    robot_type: "diff-drive"  # options: "diff-drive" or "holonomic"
+
+human:
+    human_diameter: 0.72  # diameter of the human
+    human_goal_radius: 0.25  # radius of human's goal
+    human_policy: "random"  # options: "random", "sfm", or "orca"
+    gaze_angle: 3.14159  # gaze value for humans
+    fov_angle: 6.2831853  # field of view for humans
+    prob_to_avoid_robot: 0.5  # probability that the human considers the robot in its policy
+
+laptop:
+    laptop_width: 0.18
+    laptop_length: 0.35
+
+plant:
+    plant_radius: 0.37
+
+table:
+    table_width: 0.9
+    table_length: 0.8
+
+wall:
+    wall_thickness: 0.01
+
+human-human-interaction:
+    interaction_radius: 0.72
+    interaction_goal_radius: 1.0
+    noise_variance: 0.0005
+
+human-laptop-interaction:
+    human_laptop_distance: 0.3
+
+env:
+    margin: 0.5
+    max_advance_human: 0.8
+    max_rotation_human: 1.57
+    max_advance_robot: 0.8
+    max_rotation: 0.7854
+    wall_segment_size: 1.0
+    speed_threshold: 0.05
+    crowd_dispersal_probability: 0.0
+    human_laptop_dispersal_probability: 0.0
+    crowd_formation_probability: 0.0
+    human_laptop_formation_probability: 0.0
+
+    reward_file: "sngnn"
+    cuda_device: 0
+
+    # Number of static and dynamic humans
+    min_static_humans: 4
+    max_static_humans: 4
+    min_dynamic_humans: 0
+    max_dynamic_humans: 0
+
+    # No objects in the environment
+    min_tables: 0
+    max_tables: 0
+    min_plants: 0
+    max_plants: 0
+    min_laptops: 0
+    max_laptops: 0
+
+    # Disable all interactions
+    min_h_h_dynamic_interactions: 0
+    max_h_h_dynamic_interactions: 0
+    min_h_h_dynamic_interactions_non_dispersing: 0
+    max_h_h_dynamic_interactions_non_dispersing: 0
+
+    min_h_h_static_interactions: 0
+    max_h_h_static_interactions: 0
+    min_h_h_static_interactions_non_dispersing: 0
+    max_h_h_static_interactions_non_dispersing: 0
+
+    min_human_in_h_h_interactions: 0
+    max_human_in_h_h_interactions: 0
+
+    min_h_l_interactions: 0
+    max_h_l_interactions: 0
+    min_h_l_interactions_non_dispersing: 0
+    max_h_l_interactions_non_dispersing: 0
+
+    get_padded_observations: False
+
+    # Set room shape and size
+    set_shape: "square"  # options: "random", "square", "rectangle", "L", "no-walls"
+    add_corridors: False
+
+    min_map_x: 5  # Set room width to 5 meters
+    max_map_x: 5
+    min_map_y: 5  # Set room height to 5 meters
+    max_map_y: 5

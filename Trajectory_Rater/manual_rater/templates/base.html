@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title if title else "Trajectory Analysis" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Additional styles for charts and forms */
+        .statistics, .chart-container, .filter-sort {
+            width: 90%;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        form label {
+            margin-right: 10px;
+        }
+        form input, form select {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>
