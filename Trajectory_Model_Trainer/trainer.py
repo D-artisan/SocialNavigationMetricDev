@@ -1,321 +1,322 @@
+import os
 import json
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import mutual_info_regression
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.svm import SVR
-from sklearn.neural_network import MLPRegressor
-from sklearn.model_selection import cross_val_score, GridSearchCV, TimeSeriesSplit
-from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Load the JSON data
-with open('trajectory_data.json', 'r') as f:
-    data = json.load(f)
-
-# Initialize lists to collect data
-timestamps = []
-SNGNN_values = []
-robot_features = []
-people_features = []
-
-# Extract data from JSON
-for entry in data['data']:
-    timestamps.append(entry['timestamp'])
-    SNGNN_values.append(entry['SNGNN'])
-    
-    robot = entry['robot']
-    robot_state = {
-        'robot_x': robot['x'],
-        'robot_y': robot['y'],
-        'robot_angle': robot['angle'],
-        'robot_speed_x': robot['speed_x'],
-        'robot_speed_y': robot['speed_y'],
-        'robot_speed_a': robot['speed_a'],
-        'goal_x': robot['goal_x'],
-        'goal_y': robot['goal_y'],
-    }
-    robot_features.append(robot_state)
-    
-    # For each person, calculate features relative to the robot
-    for person in entry['people']:
-        person_state = {
-            'timestamp': entry['timestamp'],
-            'person_id': person['id'],
-            'person_x': person['x'],
-            'person_y': person['y'],
-            'person_angle': person['angle'],
-            'person_speed': person['speed'],
-            'robot_x': robot['x'],
-            'robot_y': robot['y'],
-            'robot_angle': robot['angle'],
-        }
-        # Calculate derived features
-        person_state['person_robot_dx'] = person['x'] - robot['x']
-        person_state['person_robot_dy'] = person['y'] - robot['y']
-        person_state['person_robot_distance'] = np.sqrt((person_state['person_robot_dx'])**2 + (person_state['person_robot_dy'])**2)
-        person_state['person_robot_angle_diff'] = person['angle'] - robot['angle']
-        # Normalize angle difference to [-pi, pi]
-        person_state['person_robot_angle_diff'] = (person_state['person_robot_angle_diff'] + np.pi) % (2 * np.pi) - np.pi
-        # Append to people_features
-        people_features.append(person_state)
-
-# Convert lists to DataFrames
-robot_df = pd.DataFrame(robot_features)
-people_df = pd.DataFrame(people_features)
-SNGNN_series = pd.Series(SNGNN_values, name='SNGNN')
-
-# Since people_df has multiple entries per timestamp, we need to aggregate or select relevant features
-# Aggregate person features by calculating min, max, and mean distances and angle differences to the robot at each timestamp
-people_grouped = people_df.groupby('timestamp').agg({
-    'person_robot_distance': ['min', 'max', 'mean'],
-    'person_robot_angle_diff': ['min', 'max', 'mean'],
-})
-# Flatten MultiIndex columns
-people_grouped.columns = ['_'.join(col).strip() for col in people_grouped.columns.values]
-
-# Merge robot_df and people_grouped on timestamps
-robot_df['timestamp'] = timestamps
-full_df = pd.merge(robot_df, people_grouped, left_index=True, right_index=True)
-full_df['SNGNN'] = SNGNN_series
-
-# Feature Engineering
-# Calculate distance to goal
-full_df['robot_goal_dx'] = full_df['goal_x'] - full_df['robot_x']
-full_df['robot_goal_dy'] = full_df['goal_y'] - full_df['robot_y']
-full_df['robot_goal_distance'] = np.sqrt(full_df['robot_goal_dx']**2 + full_df['robot_goal_dy']**2)
-
-# Calculate heading error (difference between robot angle and angle to goal)
-full_df['robot_goal_angle'] = np.arctan2(full_df['robot_goal_dy'], full_df['robot_goal_dx'])
-full_df['heading_error'] = full_df['robot_goal_angle'] - full_df['robot_angle']
-
-# Normalize angles to [-pi, pi]
-full_df['heading_error'] = (full_df['heading_error'] + np.pi) % (2 * np.pi) - np.pi
-
-# Calculate robot speed magnitude
-full_df['robot_speed_magnitude'] = np.sqrt(full_df['robot_speed_x']**2 + full_df['robot_speed_y']**2)
-
-# Handle missing values if any
-full_df = full_df.dropna()
-
-# Select features and target
-features = [
-    'robot_x', 'robot_y', 'robot_angle',
-    'robot_speed_x', 'robot_speed_y', 'robot_speed_a',
-    'robot_speed_magnitude',
-    'robot_goal_distance', 'heading_error',
-    'person_robot_distance_min', 'person_robot_distance_max', 'person_robot_distance_mean',
-    'person_robot_angle_diff_min', 'person_robot_angle_diff_max', 'person_robot_angle_diff_mean',
-]
-X = full_df[features]
-y = full_df['SNGNN']
-
-# Standardize features
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-# Convert scaled features back to DataFrame
-X_scaled_df = pd.DataFrame(X_scaled, columns=features)
-
-# 1. Correlation Analysis
-corr_matrix = full_df[features + ['SNGNN']].corr()
-plt.figure(figsize=(12, 10))
-sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
-plt.title('Correlation Matrix')
-plt.show()
-
-# Identify features with high correlation to SNGNN
-correlations = corr_matrix['SNGNN'].drop('SNGNN').sort_values(ascending=False)
-print("Correlation with SNGNN:")
-print(correlations)
-
-# 2. Mutual Information
-mi_scores = mutual_info_regression(X_scaled_df, y)
-mi_scores = pd.Series(mi_scores, index=features)
-mi_scores = mi_scores.sort_values(ascending=False)
-print("\nMutual Information Scores:")
-print(mi_scores)
-
-# 3. Feature Importance from Random Forest
-rf = RandomForestRegressor(n_estimators=100, random_state=42)
-rf.fit(X_scaled_df, y)
-importances = rf.feature_importances_
-rf_importances = pd.Series(importances, index=features)
-rf_importances = rf_importances.sort_values(ascending=False)
-print("\nRandom Forest Feature Importances:")
-print(rf_importances)
-
-# Plotting Feature Importances
-plt.figure(figsize=(12, 6))
-rf_importances.plot(kind='bar')
-plt.title('Feature Importances from Random Forest')
-plt.ylabel('Importance')
-plt.show()
-
-# 4. Select Features Based on Metrics
-# For example, select top features based on mutual information and feature importance
-selected_features = mi_scores.index[:8].tolist()  # Select top 8 features
-print("\nSelected Features for Modeling:")
-print(selected_features)
-
-# Prepare final dataset with selected features
-X_selected = X_scaled_df[selected_features]
-
-# Advanced Models Implementation
-
-# Define a function to evaluate models using cross-validation
-def evaluate_model(model, X, y, cv):
-    scores = cross_val_score(model, X, y, cv=cv, scoring='neg_mean_squared_error')
-    rmse_scores = np.sqrt(-scores)
-    return rmse_scores.mean()
-
-# Use TimeSeriesSplit for time-series data
-tscv = TimeSeriesSplit(n_splits=5)
-
-# Dictionary to store models and their parameters for GridSearchCV
-models = {
-    'RandomForest': {
-        'model': RandomForestRegressor(random_state=42),
-        'params': {
-            'n_estimators': [50, 100, 200],
-            'max_depth': [None, 5, 10],
-            'min_samples_split': [2, 5],
-        }
-    },
-    'GradientBoosting': {
-        'model': GradientBoostingRegressor(random_state=42),
-        'params': {
-            'n_estimators': [50, 100, 200],
-            'learning_rate': [0.01, 0.1, 0.2],
-            'max_depth': [3, 5, 7],
-        }
-    },
-    'SVR': {
-        'model': SVR(),
-        'params': {
-            'C': [0.1, 1, 10],
-            'gamma': ['scale', 'auto'],
-            'kernel': ['rbf', 'linear'],
-        }
-    },
-    'NeuralNetwork': {
-        'model': MLPRegressor(random_state=42, max_iter=1000),
-        'params': {
-            'hidden_layer_sizes': [(50,), (100,), (50, 50)],
-            'activation': ['relu', 'tanh'],
-            'learning_rate_init': [0.001, 0.01],
-        }
-    },
-}
-
-# Import XGBoost if available
-try:
-    from xgboost import XGBRegressor
-    models['XGBoost'] = {
-        'model': XGBRegressor(random_state=42, objective='reg:squarederror'),
-        'params': {
-            'n_estimators': [50, 100, 200],
-            'learning_rate': [0.01, 0.1, 0.2],
-            'max_depth': [3, 5, 7],
-        }
-    }
-except ImportError:
-    print("XGBoost is not installed. Skipping XGBoost model.")
-
-# Import LightGBM if available
-try:
-    from lightgbm import LGBMRegressor
-    models['LightGBM'] = {
-        'model': LGBMRegressor(random_state=42),
-        'params': {
-            'n_estimators': [50, 100, 200],
-            'learning_rate': [0.01, 0.1, 0.2],
-            'num_leaves': [31, 50, 100],
-        }
-    }
-except ImportError:
-    print("LightGBM is not installed. Skipping LightGBM model.")
-
-# Evaluate models
-best_estimators = {}
-for name, model_info in models.items():
-    print(f"\nTraining {name} model...")
-    grid_search = GridSearchCV(
-        estimator=model_info['model'],
-        param_grid=model_info['params'],
-        cv=tscv,
-        scoring='neg_mean_squared_error',
-        n_jobs=-1
-    )
-    grid_search.fit(X_selected, y)
-    best_model = grid_search.best_estimator_
-    rmse = np.sqrt(-grid_search.best_score_)
-    print(f"Best RMSE for {name}: {rmse}")
-    print(f"Best Parameters for {name}: {grid_search.best_params_}")
-    best_estimators[name] = best_model
-
-# Compare models
-model_performance = {}
-for name, estimator in best_estimators.items():
-    rmse = evaluate_model(estimator, X_selected, y, tscv)
-    model_performance[name] = rmse
-    print(f"\n{name} RMSE: {rmse}")
-
-# Plot model performance
-plt.figure(figsize=(10, 5))
-plt.bar(model_performance.keys(), model_performance.values())
-plt.title('Model RMSE Comparison')
-plt.ylabel('RMSE')
-plt.show()
-
-# Optional: Analyze feature importances for the best model (if applicable)
-best_model_name = min(model_performance, key=model_performance.get)
-print(f"\nBest Model: {best_model_name}")
-
-if best_model_name in ['RandomForest', 'GradientBoosting', 'XGBoost', 'LightGBM']:
-    best_model = best_estimators[best_model_name]
-    feature_importances = pd.Series(best_model.feature_importances_, index=selected_features)
-    feature_importances = feature_importances.sort_values(ascending=False)
-    print(f"\nFeature Importances from {best_model_name}:")
-    print(feature_importances)
-    
-    # Plotting Feature Importances
-    plt.figure(figsize=(10, 6))
-    feature_importances.plot(kind='bar')
-    plt.title(f'Feature Importances from {best_model_name}')
-    plt.ylabel('Importance')
-    plt.show()
-
-# Predictions and Residual Analysis
-# Retrain the best model on the entire dataset
-best_model = best_estimators[best_model_name]
-best_model.fit(X_selected, y)
-
-# Make predictions
-y_pred = best_model.predict(X_selected)
-
-# Plot actual vs. predicted values
-plt.figure(figsize=(12, 6))
-plt.plot(full_df['timestamp'], y, label='Actual SNGNN', marker='o')
-plt.plot(full_df['timestamp'], y_pred, label='Predicted SNGNN', marker='x')
-plt.xlabel('Timestamp')
-plt.ylabel('SNGNN')
-plt.title('Actual vs Predicted SNGNN Over Time')
-plt.legend()
-plt.show()
-
-# Residual Plot
-residuals = y - y_pred
-plt.figure(figsize=(10, 6))
-plt.scatter(y_pred, residuals)
-plt.hlines(y=0, xmin=min(y_pred), xmax=max(y_pred), colors='red')
-plt.xlabel('Predicted SNGNN')
-plt.ylabel('Residuals')
-plt.title('Residual Plot')
-plt.show()
-
-# Save the best model if needed
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.ensemble import GradientBoostingRegressor
 import joblib
-joblib.dump(best_model, f'{best_model_name}_best_model.pkl')
+
+# Directories and files
+DATA_DIR = './trajectory_dataset/'
+LABELS_FILE = 'labels.json'
+
+def load_trajectory_data(data_dir):
+    """
+    Loads trajectory data from JSON files in the specified directory.
+    """
+    trajectories = []
+    for filename in os.listdir(data_dir):
+        if filename.endswith('.json'):
+            with open(os.path.join(data_dir, filename), 'r') as f:
+                data = json.load(f)
+                trajectories.append({
+                    'filename': filename,
+                    'data': data
+                })
+    return trajectories
+
+def load_labels(labels_file):
+    """
+    Loads manual labels from the specified JSON file.
+    """
+    with open(labels_file, 'r') as f:
+        labels = json.load(f)
+    return labels
+
+def extract_features(trajectory):
+    """
+    Extracts features from a single trajectory.
+    """
+    data = trajectory['data']
+    sequence = data.get('sequence', [])
+    features = {}
+    
+    # Initialize variables
+    num_collisions = 0
+    wall_collisions = 0
+    agent_collisions = 0
+    human_collisions = 0
+    timeout_occurred = 0
+    failure_to_progress = 0
+    stalled_time = 0.0
+    path_length = 0.0
+    velocities = []
+    accelerations = []
+    jerks = []
+    clearing_distances = []
+    min_distance_to_human = float('inf')
+    min_time_to_collision = float('inf')
+    timestamps = []
+    
+    # Flags from manual labels
+    manual_label = trajectory.get('manual_label', {})
+    success = 1 if manual_label.get('goal_reached', False) else 0
+    collision_occurred = manual_label.get('collision_occurred', False)
+    acceptable_social_nav = manual_label.get('acceptable_social_nav', None)
+    
+    # Process the sequence
+    prev_time = None
+    prev_position = None
+    prev_velocity = None
+    prev_acceleration = None
+    for obs in sequence:
+        timestamp = obs.get('timestamp', None)
+        if timestamp is not None:
+            timestamps.append(timestamp)
+            if prev_time is not None:
+                dt = timestamp - prev_time
+                # Update stalled time
+                if dt > 0:
+                    speed = np.hypot(obs['robot'].get('speed_x', 0.0), obs['robot'].get('speed_y', 0.0))
+                    if speed < 0.01:  # Threshold for being considered stalled
+                        stalled_time += dt
+            prev_time = timestamp
+        
+        # Positions
+        current_position = np.array([obs['robot']['x'], obs['robot']['y']])
+        if prev_position is not None:
+            distance = np.linalg.norm(current_position - prev_position)
+            path_length += distance
+        prev_position = current_position
+        
+        # Velocities
+        speed_x = obs['robot'].get('speed_x', 0.0)
+        speed_y = obs['robot'].get('speed_y', 0.0)
+        velocity = np.array([speed_x, speed_y])
+        velocities.append(np.linalg.norm(velocity))
+        
+        # Accelerations
+        if prev_velocity is not None and prev_time is not None and timestamp is not None:
+            dv = velocity - prev_velocity
+            dt = timestamp - prev_time
+            if dt > 0:
+                acceleration = np.linalg.norm(dv) / dt
+                accelerations.append(acceleration)
+                # Jerks
+                if prev_acceleration is not None:
+                    da = acceleration - prev_acceleration
+                    jerk = da / dt
+                    jerks.append(jerk)
+                prev_acceleration = acceleration
+        else:
+            prev_acceleration = 0.0
+        prev_velocity = velocity
+        prev_time = timestamp
+        
+        # Clearing distance (distance to nearest obstacle/human)
+        min_distance = float('inf')
+        # Adjusted to use 'people' key based on your data structure
+        for person in obs.get('people', []):
+            agent_position = np.array([person['x'], person['y']])
+            distance = np.linalg.norm(current_position - agent_position)
+            if distance < min_distance:
+                min_distance = distance
+            # Update min_distance_to_human
+            if distance < min_distance_to_human:
+                min_distance_to_human = distance
+        if min_distance != float('inf'):
+            clearing_distances.append(min_distance)
+        
+        # Time to collision (simplified)
+        current_speed = velocities[-1]
+        if current_speed > 0 and min_distance != float('inf'):
+            ttc = min_distance / current_speed
+            if ttc < min_time_to_collision:
+                min_time_to_collision = ttc
+    
+    # Compute total time
+    if timestamps:
+        total_time = timestamps[-1] - timestamps[0]
+    else:
+        total_time = 0.0
+    
+    # Compute optimal path length (straight-line distance from start to goal)
+    if sequence and 'robot' in sequence[0]:
+        start_position = np.array([
+            sequence[0]['robot']['x'],
+            sequence[0]['robot']['y']
+        ])
+        goal_position = np.array([
+            sequence[0]['robot']['goal_x'],
+            sequence[0]['robot']['goal_y']
+        ])
+        optimal_path_length = np.linalg.norm(goal_position - start_position)
+    else:
+        # Handle the case where start or goal positions are missing
+        optimal_path_length = 0.0
+    
+    # Success weighted by path length (SPL)
+    if path_length > 0 and optimal_path_length > 0:
+        spl = success * (optimal_path_length / max(path_length, optimal_path_length))
+    else:
+        spl = 0.0
+    
+    # Populate features
+    features['success'] = success
+    features['collision_occurred'] = 1 if collision_occurred else 0
+    features['wall_collisions'] = wall_collisions  # Placeholder
+    features['agent_collisions'] = agent_collisions  # Placeholder
+    features['human_collisions'] = human_collisions  # Placeholder
+    features['timeout_occurred'] = timeout_occurred  # Placeholder
+    features['failure_to_progress'] = failure_to_progress  # Placeholder
+    features['stalled_time'] = stalled_time
+    features['time_to_goal'] = total_time
+    features['path_length'] = path_length
+    features['success_weighted_path_length'] = spl
+    
+    # Velocity-based features
+    features['v_min'] = min(velocities) if velocities else 0.0
+    features['v_avg'] = np.mean(velocities) if velocities else 0.0
+    features['v_max'] = max(velocities) if velocities else 0.0
+    
+    # Acceleration-based features
+    features['a_min'] = min(accelerations) if accelerations else 0.0
+    features['a_avg'] = np.mean(accelerations) if accelerations else 0.0
+    features['a_max'] = max(accelerations) if accelerations else 0.0
+    
+    # Jerk-based features
+    features['j_min'] = min(jerks) if jerks else 0.0
+    features['j_avg'] = np.mean(jerks) if jerks else 0.0
+    features['j_max'] = max(jerks) if jerks else 0.0
+    
+    # Clearing distance features
+    features['cd_min'] = min(clearing_distances) if clearing_distances else 0.0
+    features['cd_avg'] = np.mean(clearing_distances) if clearing_distances else 0.0
+    
+    # Space compliance (SC)
+    features['space_compliance'] = acceptable_social_nav / 100.0 if acceptable_social_nav is not None else 0.0
+    
+    # Minimum distance to human
+    features['min_distance_to_human'] = min_distance_to_human if min_distance_to_human != float('inf') else 0.0
+    
+    # Minimum time to collision
+    features['min_time_to_collision'] = min_time_to_collision if min_time_to_collision != float('inf') else 0.0
+    
+    # Aggregated time (AT)
+    features['aggregated_time'] = total_time  # Could be adjusted if needed
+    
+    # Quality score (label)
+    if acceptable_social_nav is not None:
+        quality_score = acceptable_social_nav / 100.0  # Normalize to [0, 1]
+    else:
+        quality_score = 0.0  # Default to 0 if not available
+    features['quality_score'] = quality_score
+    
+    return features
+
+def create_dataset(trajectories, labels):
+    """
+    Creates a dataset from the trajectories and labels.
+    """
+    data = []
+    for traj in trajectories:
+        filename = traj['filename']
+        # Get the manual label
+        manual_label = labels.get(filename, {})
+        if 'acceptable_social_nav' not in manual_label:
+            continue  # Skip trajectories without a quality score
+        # Attach manual labels to trajectory
+        traj['manual_label'] = manual_label
+        features = extract_features(traj)
+        data.append(features)
+    df = pd.DataFrame(data)
+    return df
+
+def main():
+    # Load data
+    print("Loading data...")
+    trajectories = load_trajectory_data(DATA_DIR)
+    labels = load_labels(LABELS_FILE)
+    
+    # Create dataset
+    print("Creating dataset...")
+    dataset = create_dataset(trajectories, labels)
+    
+    print("Dataset Shape:", dataset.shape)
+    print("Dataset Columns:", dataset.columns)
+    
+    # Features and target variable
+    X = dataset.drop('quality_score', axis=1)
+    y = dataset['quality_score']
+    
+    # List of feature names
+    feature_names = X.columns.tolist()
+    
+    # Handle missing values (if any)
+    X = X.fillna(0)
+    
+    # Split the dataset
+    print("Splitting dataset...")
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Data preprocessing
+    print("Scaling features...")
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # Train the model
+    print("Training the model...")
+    model = GradientBoostingRegressor(random_state=42)
+    model.fit(X_train_scaled, y_train)
+    
+    # Evaluate the model
+    print("Evaluating the model...")
+    y_pred = model.predict(X_test_scaled)
+    y_pred = np.clip(y_pred, 0, 1)  # Ensure predictions are between 0 and 1
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    print("Mean Squared Error:", mse)
+    print("R^2 Score:", r2)
+    
+    # Cross-validation
+    print("Performing cross-validation...")
+    cv_scores = cross_val_score(model, X_train_scaled, y_train, cv=5, scoring='neg_mean_squared_error')
+    cv_mse = -cv_scores.mean()
+    print("Cross-Validation MSE:", cv_mse)
+    
+    # Feature importance
+    importances = model.feature_importances_
+    feature_importance = pd.DataFrame({
+        'Feature': feature_names,
+        'Importance': importances
+    })
+    feature_importance.sort_values(by='Importance', ascending=False, inplace=True)
+    print("Feature Importance:")
+    print(feature_importance)
+    
+    # Save the trained model and scaler
+    print("Saving the model and scaler...")
+    joblib.dump(model, 'trajectory_quality_model.pkl')
+    joblib.dump(scaler, 'scaler.pkl')
+    print("Model and scaler saved.")
+
+def predict_trajectory_quality(traj):
+    """
+    Predicts the quality score of a trajectory using the trained model.
+    """
+    features = extract_features(traj)
+    X_new = pd.DataFrame([features])
+    X_new = X_new.drop('quality_score', axis=1)
+    # Load scaler and model
+    scaler = joblib.load('scaler.pkl')
+    model = joblib.load('trajectory_quality_model.pkl')
+    X_new_scaled = scaler.transform(X_new)
+    y_pred = model.predict(X_new_scaled)
+    quality_score = np.clip(y_pred[0], 0, 1)
+    return quality_score
+
+if __name__ == '__main__':
+    main()

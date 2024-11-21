@@ -1,20 +1,314 @@
 {
+  "A000010.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 63.0,
+    "rating": "Success"
+  },
+  "A000015.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000026.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000005.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 66.0,
+    "rating": "Success"
+  },
+  "A000024.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 28.0,
+    "rating": "Failure"
+  },
+  "A000020.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000016.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 88.0,
+    "rating": "Success"
+  },
+  "A000017.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 74.0,
+    "rating": "Success"
+  },
+  "A000040.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000047.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000004.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000021.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000007.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000013.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
   "A000000.json": {
     "goal_reached": true,
     "collision_occurred": false,
-    "acceptable_social_nav": 30.0,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000003.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 31.0,
+    "rating": "Success"
+  },
+  "A000009.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 93.0,
+    "rating": "Success"
+  },
+  "A000051.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 42.0,
+    "rating": "Failure"
+  },
+  "A000036.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 41.0,
+    "rating": "Failure"
+  },
+  "A000031.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 96.0,
+    "rating": "Success"
+  },
+  "A000006.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000023.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 8.0,
+    "rating": "Failure"
+  },
+  "A000019.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 98.0,
+    "rating": "Success"
+  },
+  "A000037.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 74.0,
+    "rating": "Success"
+  },
+  "A000029.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000030.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000046.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000044.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000039.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 68.0,
+    "rating": "Success"
+  },
+  "A000014.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 85.0,
+    "rating": "Success"
+  },
+  "A000035.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 68.0,
+    "rating": "Success"
+  },
+  "A000025.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 98.0,
+    "rating": "Success"
+  },
+  "A000027.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000008.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 82.0,
+    "rating": "Success"
+  },
+  "A000028.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 45.0,
+    "rating": "Failure"
+  },
+  "A000022.json": {
+    "goal_reached": false,
+    "collision_occurred": true,
+    "acceptable_social_nav": 0.0,
+    "rating": "Failure"
+  },
+  "A000048.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000050.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000012.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000045.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000011.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 65.0,
+    "rating": "Success"
+  },
+  "A000032.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 60.0,
+    "rating": "Success"
+  },
+  "A000041.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000038.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 25.0,
+    "rating": "Failure"
+  },
+  "A000033.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 37.0,
+    "rating": "Failure"
+  },
+  "A000042.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 74.0,
+    "rating": "Success"
+  },
+  "A000034.json": {
+    "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 49.0,
     "rating": "Failure"
   },
   "A000001.json": {
     "goal_reached": true,
+    "collision_occurred": true,
+    "acceptable_social_nav": 59.0,
+    "rating": "Success"
+  },
+  "A000018.json": {
+    "goal_reached": false,
+    "collision_occurred": true,
+    "acceptable_social_nav": 0.0,
+    "rating": "Failure"
+  },
+  "A000043.json": {
+    "goal_reached": true,
     "collision_occurred": false,
-    "acceptable_social_nav": 92.0,
+    "acceptable_social_nav": 95.0,
     "rating": "Success"
   },
   "A000002.json": {
     "goal_reached": true,
     "collision_occurred": false,
-    "acceptable_social_nav": 98.0,
+    "acceptable_social_nav": 100.0,
+    "rating": "Success"
+  },
+  "A000049.json": {
+    "goal_reached": true,
+    "collision_occurred": false,
+    "acceptable_social_nav": 100.0,
     "rating": "Success"
   }
 }
