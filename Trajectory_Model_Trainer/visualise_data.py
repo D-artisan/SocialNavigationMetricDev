@@ -2,15 +2,15 @@ import os
 import json
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.ensemble import GradientBoostingRegressor
+import matplotlib.pyplot as plt
+import seaborn as sns
 import joblib
 
 # Directories and files
 DATA_DIR = './trajectory_dataset/'
 LABELS_FILE = 'labels.json'
+MODEL_FILE = 'trajectory_quality_model.pkl'
+SCALER_FILE = 'scaler.pkl'
 
 def load_trajectory_data(data_dir):
     """
@@ -21,7 +21,6 @@ def load_trajectory_data(data_dir):
         if filename.endswith('.json'):
             with open(os.path.join(data_dir, filename), 'r') as f:
                 data = json.load(f)
-
                 trajectories.append({
                     'filename': filename,
                     'data': data
@@ -116,15 +115,13 @@ def extract_features(trajectory):
         prev_velocity = velocity
         prev_time = timestamp
         
-        # Clearing distance (distance to nearest obstacle/human)
+        # Clearing distance (distance to nearest human)
         min_distance = float('inf')
-        # Adjusted to use 'people' key based on your data structure
         for person in obs.get('people', []):
             agent_position = np.array([person['x'], person['y']])
             distance = np.linalg.norm(current_position - agent_position)
             if distance < min_distance:
                 min_distance = distance
-            # Update min_distance_to_human
             if distance < min_distance_to_human:
                 min_distance_to_human = distance
         if min_distance != float('inf'):
@@ -165,6 +162,7 @@ def extract_features(trajectory):
         spl = 0.0
     
     # Populate features
+    features['filename'] = trajectory['filename']
     features['success'] = success
     features['collision_occurred'] = 1 if collision_occurred else 0
     features['wall_collisions'] = wall_collisions  # Placeholder
@@ -235,6 +233,86 @@ def create_dataset(trajectories, labels):
     df = pd.DataFrame(data)
     return df
 
+def visualise_data(dataset):
+    """
+    Generates visualizations from the dataset.
+    """
+    # Set up the plotting style
+    sns.set(style="whitegrid")
+    
+    # Correlation Matrix Heatmap
+    plt.figure(figsize=(12, 10))
+    corr = dataset.corr()
+    sns.heatmap(corr, annot=True, fmt=".2f", cmap='coolwarm', square=True)
+    plt.title('Correlation Matrix Heatmap')
+    plt.tight_layout()
+    plt.savefig('correlation_heatmap.png')
+    plt.show()
+    
+    # Distribution of Quality Scores
+    plt.figure(figsize=(8, 6))
+    sns.histplot(dataset['quality_score'], bins=20, kde=True)
+    plt.title('Distribution of Quality Scores')
+    plt.xlabel('Quality Score')
+    plt.ylabel('Frequency')
+    plt.tight_layout()
+    plt.savefig('quality_score_distribution.png')
+    plt.show()
+    
+    # Scatter Plot of Path Length vs. Quality Score
+    plt.figure(figsize=(8, 6))
+    sns.scatterplot(x='path_length', y='quality_score', data=dataset)
+    plt.title('Path Length vs. Quality Score')
+    plt.xlabel('Path Length')
+    plt.ylabel('Quality Score')
+    plt.tight_layout()
+    plt.savefig('path_length_vs_quality_score.png')
+    plt.show()
+    
+    # Boxplot of Velocity Features
+    velocity_features = ['v_min', 'v_avg', 'v_max']
+    plt.figure(figsize=(10, 6))
+    dataset_melted = dataset.melt(value_vars=velocity_features)
+    sns.boxplot(x='variable', y='value', data=dataset_melted)
+    plt.title('Velocity Features Distribution')
+    plt.xlabel('Velocity Feature')
+    plt.ylabel('Value')
+    plt.tight_layout()
+    plt.savefig('velocity_features_boxplot.png')
+    plt.show()
+    
+    # Feature Importance (if model is available)
+    if os.path.exists(MODEL_FILE):
+        model = joblib.load(MODEL_FILE)
+        feature_names = dataset.drop(['filename', 'quality_score'], axis=1).columns
+        importances = model.feature_importances_
+        feature_importance = pd.DataFrame({
+            'Feature': feature_names,
+            'Importance': importances
+        })
+        feature_importance.sort_values(by='Importance', ascending=False, inplace=True)
+        
+        plt.figure(figsize=(12, 8))
+        sns.barplot(x='Importance', y='Feature', data=feature_importance)
+        plt.title('Feature Importances')
+        plt.tight_layout()
+        plt.savefig('feature_importances.png')
+        plt.show()
+    else:
+        print("Model file not found. Skipping feature importance visualization.")
+    
+    # Pair Plot of Selected Features
+    selected_features = ['quality_score', 'v_avg', 'a_avg', 'cd_min', 'path_length']
+    sns.pairplot(dataset[selected_features], diag_kind='kde')
+    plt.suptitle('Pair Plot of Selected Features', y=1.02)
+    plt.tight_layout()
+    plt.savefig('pair_plot_selected_features.png')
+    plt.show()
+    
+    # Save dataset to CSV
+    dataset.to_csv('trajectory_dataset.csv', index=False)
+    print("Dataset saved to 'trajectory_dataset.csv'.")
+
 def main():
     # Load data
     print("Loading data...")
@@ -248,76 +326,13 @@ def main():
     print("Dataset Shape:", dataset.shape)
     print("Dataset Columns:", dataset.columns)
     
-    # Features and target variable
-    X = dataset.drop('quality_score', axis=1)
-    y = dataset['quality_score']
-    
-    # List of feature names
-    feature_names = X.columns.tolist()
-    
     # Handle missing values (if any)
-    X = X.fillna(0)
+    dataset = dataset.fillna(0)
     
-    # Split the dataset
-    print("Splitting dataset...")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Data preprocessing
-    print("Scaling features...")
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-    
-    # Train the model
-    print("Training the model...")
-    model = GradientBoostingRegressor(random_state=42)
-    model.fit(X_train_scaled, y_train)
-    
-    # Evaluate the model
-    print("Evaluating the model...")
-    y_pred = model.predict(X_test_scaled)
-    y_pred = np.clip(y_pred, 0, 1)  # Ensure predictions are between 0 and 1
-    mse = mean_squared_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    print("Mean Squared Error:", mse)
-    print("R^2 Score:", r2)
-    
-    # Cross-validation
-    print("Performing cross-validation...")
-    cv_scores = cross_val_score(model, X_train_scaled, y_train, cv=5, scoring='neg_mean_squared_error')
-    cv_mse = -cv_scores.mean()
-    print("Cross-Validation MSE:", cv_mse)
-    
-    # Feature importance
-    importances = model.feature_importances_
-    feature_importance = pd.DataFrame({
-        'Feature': feature_names,
-        'Importance': importances
-    })
-    feature_importance.sort_values(by='Importance', ascending=False, inplace=True)
-    print("Feature Importance:")
-    print(feature_importance)
-    
-    # Save the trained model and scaler
-    print("Saving the model and scaler...")
-    joblib.dump(model, 'trajectory_quality_model.pkl')
-    joblib.dump(scaler, 'scaler.pkl')
-    print("Model and scaler saved.")
-
-def predict_trajectory_quality(traj):
-    """
-    Predicts the quality score of a trajectory using the trained model.
-    """
-    features = extract_features(traj)
-    X_new = pd.DataFrame([features])
-    X_new = X_new.drop('quality_score', axis=1)
-    # Load scaler and model
-    scaler = joblib.load('scaler.pkl')
-    model = joblib.load('trajectory_quality_model.pkl')
-    X_new_scaled = scaler.transform(X_new)
-    y_pred = model.predict(X_new_scaled)
-    quality_score = np.clip(y_pred[0], 0, 1)
-    return quality_score
+    # Visualise data
+    print("Visualizing data...")
+    visualise_data(dataset)
+    print("Visualization completed.")
 
 if __name__ == '__main__':
     main()
