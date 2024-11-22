@@ -20,7 +20,7 @@
                 <video width="200" controls>
                     <source src="{{ url_for('serve_video', filename=trajectory.video_file) }}" type="video/mp4">
                     Your browser does not support the video tag.
-                </video>
+                </video><a href="{{ url_for('trajectory_detail', filename=trajectory.filename) }}"><p>Click to rate trajectory</p></h3></a>
                 {% else %}
                 No Video Available
                 {% endif %}

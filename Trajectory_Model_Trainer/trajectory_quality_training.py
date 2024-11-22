@@ -300,8 +300,8 @@ def main():
     
     # Save the trained model and scaler
     print("Saving the model and scaler...")
-    joblib.dump(model, 'trajectory_quality_model.pkl')
-    joblib.dump(scaler, 'scaler.pkl')
+    joblib.dump(model, './training_output/trajectory_quality_model.pkl')
+    joblib.dump(scaler, './training_output/scaler.pkl')
     print("Model and scaler saved.")
 
 def predict_trajectory_quality(traj):

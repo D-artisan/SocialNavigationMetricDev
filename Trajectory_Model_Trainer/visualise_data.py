@@ -246,7 +246,7 @@ def visualise_data(dataset):
     sns.heatmap(corr, annot=True, fmt=".2f", cmap='coolwarm', square=True)
     plt.title('Correlation Matrix Heatmap')
     plt.tight_layout()
-    plt.savefig('correlation_heatmap.png')
+    plt.savefig('./visuals/correlation_heatmap.png')
     plt.show()
     
     # Distribution of Quality Scores
@@ -256,7 +256,7 @@ def visualise_data(dataset):
     plt.xlabel('Quality Score')
     plt.ylabel('Frequency')
     plt.tight_layout()
-    plt.savefig('quality_score_distribution.png')
+    plt.savefig('./visuals/quality_score_distribution.png')
     plt.show()
     
     # Scatter Plot of Path Length vs. Quality Score
@@ -266,7 +266,7 @@ def visualise_data(dataset):
     plt.xlabel('Path Length')
     plt.ylabel('Quality Score')
     plt.tight_layout()
-    plt.savefig('path_length_vs_quality_score.png')
+    plt.savefig('./visuals/path_length_vs_quality_score.png')
     plt.show()
     
     # Boxplot of Velocity Features
@@ -278,7 +278,7 @@ def visualise_data(dataset):
     plt.xlabel('Velocity Feature')
     plt.ylabel('Value')
     plt.tight_layout()
-    plt.savefig('velocity_features_boxplot.png')
+    plt.savefig('./visuals/velocity_features_boxplot.png')
     plt.show()
     
     # Feature Importance (if model is available)
@@ -296,7 +296,7 @@ def visualise_data(dataset):
         sns.barplot(x='Importance', y='Feature', data=feature_importance)
         plt.title('Feature Importances')
         plt.tight_layout()
-        plt.savefig('feature_importances.png')
+        plt.savefig('./visuals/feature_importances.png')
         plt.show()
     else:
         print("Model file not found. Skipping feature importance visualization.")
@@ -306,11 +306,11 @@ def visualise_data(dataset):
     sns.pairplot(dataset[selected_features], diag_kind='kde')
     plt.suptitle('Pair Plot of Selected Features', y=1.02)
     plt.tight_layout()
-    plt.savefig('pair_plot_selected_features.png')
+    plt.savefig('./visuals/pair_plot_selected_features.png')
     plt.show()
     
     # Save dataset to CSV
-    dataset.to_csv('trajectory_dataset.csv', index=False)
+    dataset.to_csv('./visuals/trajectory_dataset.csv', index=False)
     print("Dataset saved to 'trajectory_dataset.csv'.")
 
 def main():
