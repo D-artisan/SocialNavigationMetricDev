@@ -10,13 +10,13 @@ episode:
     end_with_collision: False
 
 robot:
-    robot_radius: 0.35  # radius of the robot
-    goal_radius: 0.5  # radius of the goal
+    robot_radius: 0.20  # radius of the robot
+    goal_radius: 0.4  # radius of the goal
     robot_type: "diff-drive"  # options: "diff-drive" or "holonomic"
 
 human:
-    human_diameter: 0.72  # diameter of the human
-    human_goal_radius: 0.25  # radius of human's goal
+    human_diameter: 0.32  # diameter of the human
+    human_goal_radius: 0.30  # radius of human's goal
     human_policy: "random"  # options: "random", "sfm", or "orca"
     gaze_angle: 3.14159  # gaze value for humans
     fov_angle: 6.2831853  # field of view for humans

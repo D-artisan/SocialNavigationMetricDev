@@ -2,6 +2,9 @@ import os
 import json
 
 def load_trajectory_data(data_dir):
+    """
+    Loads trajectory data from JSON files in the specified directory.
+    """
     trajectories = []
     for filename in os.listdir(data_dir):
         if filename.endswith('.json'):
