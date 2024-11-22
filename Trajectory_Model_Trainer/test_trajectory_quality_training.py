@@ -5,8 +5,6 @@ import pandas as pd
 import json
 import joblib
 
-# Import the functions from trajectory_quality_training.py
-# Adjust the import statement based on your project structure
 from trajectory_quality_training import (
     load_trajectory_data,
     load_labels,
@@ -196,7 +194,7 @@ class TestTrajectoryQualityTraining(unittest.TestCase):
         mock_model = MagicMock()
         
         # Mock the scaler's transform method
-        mock_scaler.transform.return_value = np.array([[0.0] * 25])  # Adjust the number based on feature count
+        mock_scaler.transform.return_value = np.array([[0.0] * 25])  
         
         # Mock the model's predict method
         mock_model.predict.return_value = [0.75]
