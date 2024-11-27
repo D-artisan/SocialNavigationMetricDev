@@ -1,0 +1,8 @@
+Summary Statistics of Predicted Quality Scores:
+Number of Trajectories: 21
+Mean Quality Score: 0.8599
+Median Quality Score: 0.7899
+Standard Deviation: 0.1357
+Minimum Quality Score: 0.6705
+Maximum Quality Score: 1.0000
+Range of Quality Scores: 0.3295
