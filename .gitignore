@@ -2,4 +2,5 @@ socnav-py38/
 ./SocNav3-simdata-generator-modified/trajectory_dataset/
 ./Trajectory_Rater/manual_rater/trajectory_dataset/
 ./Trajectory_Model_Trainer/trajectory_dataset/
+./Trajectory_Model_Trainer/__pycache__
 ./Trajectory_Rater/__pycache__
