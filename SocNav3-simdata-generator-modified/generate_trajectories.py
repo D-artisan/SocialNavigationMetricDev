@@ -29,7 +29,8 @@ class MainWindow(QtWidgets.QWidget, Ui_MainWindow):
 
         self.init_joystick()
 
-        self.save_dir = './trajectory_dataset/'
+        self.save_dir = './trajectory_dataset/' 
+        # self.save_dir = './testing_dataset/' # Testing Dataset
         self.data_file_index = 0
         self.update_data_index()
         self.images_for_video = list()

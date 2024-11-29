@@ -1,0 +1,1 @@
+Information about rated trajectories are stores in ./manual_rater/labels.json
