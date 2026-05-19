@@ -122,7 +122,7 @@ triton==3.0.0
 typer==0.12.5
 typing_extensions==4.12.2
 tzdata==2024.2
-urllib3==2.2.3
+urllib3==2.7.0
 Werkzeug==3.0.6
 yarl==1.15.2
 zipp==3.20.2
